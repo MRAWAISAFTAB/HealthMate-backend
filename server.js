@@ -11,11 +11,14 @@ import vitalRoutes from './routes/vitals.route.js';
 dotenv.config();
 const app = express();
 
+// Updated CORS configuration for Vercel compatibility
 app.use(cors({
-    origin: '*',
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
-    allowedHeaders: ['Content-Type', 'Authorization']
+    origin: '*', 
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Added OPTIONS for preflight
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    optionsSuccessStatus: 200 // Fixed: Essential for some browsers/proxies
 }));
+
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
@@ -36,10 +39,15 @@ const MONGO_URI = process.env.MONGO_URI;
 mongoose.connect(MONGO_URI)
     .then(() => {
         console.log("✅ Connected to MongoDB Atlas");
-        app.listen(PORT, () => {
-            console.log(`📱 Server running on http://localhost:${PORT}`);
-        });
+        // Check if we are not in a serverless environment (like Vercel) to listen
+        if (process.env.NODE_ENV !== 'production') {
+            app.listen(PORT, () => {
+                console.log(`📱 Server running on http://localhost:${PORT}`);
+            });
+        }
     })
     .catch((err) => {
         console.error("❌ Database connection error:", err.message);
     });
+
+export default app; // Export for Vercel's serverless functions
