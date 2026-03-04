@@ -84,6 +84,9 @@ CRITICAL RULES:
         });
 
         const rawText = response.text.trim();
+        console.log("=== GEMINI RAW RESPONSE ===");
+        console.log(rawText);
+        console.log("=== END GEMINI RAW ===");
 
         // Strip markdown backticks
         let cleaned = rawText
@@ -95,21 +98,22 @@ CRITICAL RULES:
         // Fix single quotes -> double quotes for valid JSON
         const jsonFixed = cleaned
             .replace(/'/g, '"')
-            .replace(/([{,]\s*)(\w+)(\s*:)/g, '$1"$2"$3'); // unquoted keys -> quoted
+            .replace(/([{,]\s*)(\w+)(\s*:)/g, '$1"$2"$3');
 
         let parsed;
         try {
             parsed = JSON.parse(jsonFixed);
+            console.log("=== PARSED OK ===", JSON.stringify(parsed).slice(0, 200));
         } catch (e) {
-            // Last resort: extract fields manually with regex
+            console.log("=== JSON.parse FAILED, using regex fallback ===", e.message);
             const extract = (key) => {
-                const match = cleaned.match(new RegExp(key + '["\'\\s]*:\s*["\'](.*?)["\'](,|\n|})', 's'));
+                const match = cleaned.match(new RegExp(key + '["\'\\s]*:\\s*["\'](.*?)["\'](,|\\n|})', 's'));
                 return match ? match[1] : '';
             };
             const extractArr = (key) => {
-                const match = cleaned.match(new RegExp(key + '["\'\\s]*:\s*\[(.*?)\]', 's'));
+                const match = cleaned.match(new RegExp(key + '["\'\\s]*:\\s*\\[(.*?)\\]', 's'));
                 if (!match) return [];
-                return match[1].match(/["\'](.*?)["\'](?=,|\s*\])/gs)?.map(s => s.replace(/^["\']/,'').replace(/["\']*$/,'')) || [];
+                return match[1].match(/["'](.*?)["'](?=,|\s*\])/gs)?.map(s => s.replace(/^["']/,'').replace(/["']*$/,'')) || [];
             };
             parsed = {
                 isValid: !cleaned.includes('"isValid": false') && !cleaned.includes("isValid: false"),
@@ -124,7 +128,6 @@ CRITICAL RULES:
             };
         }
 
-        // If not a valid medical report
         if (!parsed.isValid) {
             throw new Error(parsed.error || "Ye medical report nahi hai.");
         }
@@ -133,7 +136,7 @@ CRITICAL RULES:
 
     } catch (error) {
         if (error.message?.includes("medical report")) {
-            throw error; // Re-throw our custom error
+            throw error;
         }
         console.error("Gemini error:", error);
         throw new Error("AI analysis failed: " + error.message);
