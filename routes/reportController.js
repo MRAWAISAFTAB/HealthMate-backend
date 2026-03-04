@@ -13,7 +13,6 @@ export const uploadAndAnalyzeReport = async (req, res) => {
         const base64Data = file.buffer.toString('base64');
         const fileDataUri = `data:${file.mimetype};base64,${base64Data}`;
 
-        // analyzeReport ab structured object return karta hai
         const aiResult = await analyzeReport(file.buffer, file.mimetype);
 
         const newReport = new Report({
@@ -37,14 +36,14 @@ export const uploadAndAnalyzeReport = async (req, res) => {
         res.status(201).json({
             message: "Report analyzed and saved! ✅",
             data: {
-                _id:         newReport._id,
-                fileName:    newReport.fileName,
-                aiAnalysis:  newReport.aiAnalysis
+                _id:        newReport._id,
+                fileName:   newReport.fileName,
+                aiAnalysis: newReport.aiAnalysis
             }
         });
 
     } catch (error) {
-        console.error("Controller error:", error.message);
+        console.error("Error in Controller:", error.message);
         res.status(500).json({ message: error.message || "Analysis mein masla aya." });
     }
 };
@@ -58,5 +57,19 @@ export const getUserReports = async (req, res) => {
     } catch (error) {
         console.error("Fetch Error:", error.message);
         res.status(500).json({ message: "History fetch karne mein masla hua." });
+    }
+};
+
+export const deleteReport = async (req, res) => {
+    try {
+        const report = await Report.findOneAndDelete({ 
+            _id: req.params.id, 
+            userId: req.user?.id 
+        });
+        if (!report) return res.status(404).json({ message: "Report nahi mili ya permission nahi!" });
+        res.status(200).json({ message: "Report delete ho gayi! ✅" });
+    } catch (error) {
+        console.error("Delete Error:", error.message);
+        res.status(500).json({ message: "Delete mein masla aya." });
     }
 };
