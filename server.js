@@ -20,6 +20,12 @@ app.use('/api/auth', authRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/vitals', vitalRoutes);
 
+
+app.get('/check' , (req,res)=>{
+    res.ssend('Hello on /check')
+  console.log("hello world running");
+})
+
 // Database Connection & Server Start
 const PORT = process.env.PORT || 5000;
 const MONGO_URI = process.env.MONGO_URI;
