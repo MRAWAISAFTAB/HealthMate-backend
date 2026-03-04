@@ -16,6 +16,5 @@ const upload = multer({
 router.post('/upload', protect, upload.single('report'), uploadAndAnalyzeReport);
 
 router.get('/my-history', protect, getUserReports);
-router.delete('/:reportId', protect, deleteReport);
 
 export default router;
