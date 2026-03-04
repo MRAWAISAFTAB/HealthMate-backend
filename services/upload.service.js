@@ -1,16 +1,26 @@
-import { v2 as cloudinary } from 'cloudinary';
-import { CloudinaryStorage } from 'multer-storage-cloudinary';
-import multer from 'multer';
+router.post(
+  "/upload",
+  isAuthenticated,
+  upload.single("report"),  // make sure this matches formData.append('report', file)
+  async (req, res) => {
+    try {
+      if (!req.file) return res.status(400).json({ message: "File missing!" });
 
-cloudinary.config({ 
-  cloud_name: process.env.CLOUD_NAME, 
-  api_key: process.env.CLOUD_KEY, 
-  api_secret: process.env.CLOUD_SECRET 
-});
+      // Convert file to base64
+      const base64File = req.file.buffer.toString("base64");
 
-const storage = new CloudinaryStorage({
-  cloudinary: cloudinary,
-  params: { folder: 'HealthMate_Reports', allowed_formats: ['jpg', 'png', 'pdf'] },
-});
+      // Save to MongoDB or process with AI
+      const report = await Report.create({
+        userId: req.user.id,          // from JWT
+        reportName: req.file.originalname,
+        fileData: base64File,
+        fileType: req.file.mimetype,
+      });
 
-export const upload = multer({ storage });
+      res.status(201).json({ message: "Uploaded!", data: report });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: "Upload failed", error: error.message });
+    }
+  }
+);

@@ -14,7 +14,7 @@ const app = express();
 // 1. Optimized CORS for Mobile & Vercel
 // Using a specific origin is better for iOS "strict-origin" policies
 app.use(cors({
-    origin: process.env.CLIENT_URL || '*', 
+    origin: process.env.CLIENT_URL, 
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
     credentials: true,
